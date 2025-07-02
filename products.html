@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fake Store</title>
+  <style>
+    body {
+      background-color: #2E8B57;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    #search, #category {
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border: none;
+      background-color: lightgreen;
+    }
+
+    .box {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+
+    }
+
+    .item {
+      border: 1px solid gray;
+      padding: 10px;
+      width: 200px;
+      margin: 10px;
+      border-radius: 10px;
+      box-shadow: 2px 2px 5px #aaa;
+      background-color: white;
+      border: 2px solid #00FA9A;
+
+    }
+
+    .item img {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+    }
+
+    #loadMore {
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background-color: lightgreen;
+    }
+
+    #noData {
+      color: red;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div style="justify-content:first baseline; text-align: center;">
+    <!-- <img src="assets/pngtree-shopping-store-logo-png-image_5739203.jpg" alt="" style="height: 75px; display: inline;"> -->
+    <h1 style="display: inline; color: white;">Store Items</h1>
+
+  </div>
+
+  <input type="text" id="search" placeholder="Search..." />
+  <select id="category">
+    <option value="all">All</option>
+  </select>
+
+  <div class="box" id="container"></div>
+
+  <p id="noData" style="display: none;">No products found</p>
+
+  <button id="loadMore">Load More</button>
+
+  <script>
+    let items = []
+    let shown = 0
+    let perPage = 5
+    let container = document.getElementById("container")
+    let loadMore = document.getElementById("loadMore")
+    let search = document.getElementById("search")
+    let category = document.getElementById("category")
+    let noData = document.getElementById("noData")
+
+    fetch("https://fakestoreapi.com/products")
+      .then(x => x.json())
+      .then(data => {
+        items = data
+
+        // make categories
+        let cats = []
+        for (let i = 0; i < items.length; i++) {
+          if (!cats.includes(items[i].category)) {
+            cats.push(items[i].category)
+          }
+        }
+        for (let i = 0; i < cats.length; i++) {
+          let opt = document.createElement("option")
+          opt.value = cats[i]
+          opt.textContent = cats[i]
+          category.appendChild(opt)
+        }
+
+        showItems()
+      })
+
+    function showItems() {
+      let count = 0
+      for (let i = shown; i < items.length; i++) {
+        let title = items[i].title.toLowerCase()
+        let searchText = search.value.toLowerCase()
+        let catVal = category.value
+
+        if ((catVal == "all" || items[i].category == catVal) && title.includes(searchText)) {
+          let box = document.createElement("div")
+          box.className = "item"
+          box.innerHTML = `
+            <img src="${items[i].image}" />
+            <h4>${items[i].title}</h4>
+            <p>$${items[i].price}</p>
+          `
+          box.onclick = function () {
+            location.href = "product.html?id=" + items[i].id
+          }
+          container.appendChild(box)
+
+          count++
+          if (count >= perPage) {
+            break
+          }
+        }
+      }
+
+      shown += count
+
+      if (shown >= items.filter(p => (category.value == "all" || p.category == category.value) && p.title.toLowerCase().includes(search.value.toLowerCase())).length) {
+        loadMore.style.display = "none"
+      } else {
+        loadMore.style.display = "inline-block"
+      }
+
+      if (shown == 0) {
+        noData.style.display = "block"
+      } else {
+        noData.style.display = "none"
+      }
+    }
+
+    loadMore.onclick = function () {
+      showItems()
+    }
+
+    search.oninput = function () {
+      container.innerHTML = ""
+      shown = 0
+      showItems()
+    }
+
+    category.onchange = function () {
+      container.innerHTML = ""
+      shown = 0
+      showItems()
+    }
+  </script>
+
+</body>
+</html>
